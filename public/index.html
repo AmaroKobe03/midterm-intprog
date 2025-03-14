@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo CRUD Management</title>
+</head>
+
+<body>
+  <h1>Todo CRUD Management</h1>
+
+  <form id="task-form">
+    <input type="text" id="task-name" placeholder="Task Name" required>
+    <input type="text" id="task-desc" placeholder="Task Description" required>
+    <button type="submit">Add Task</button>
+  </form>
+
+  <ul id="task-list"></ul>
+
+  <script>
+    const taskForm = document.getElementById('task-form');
+    const taskNameInput = document.getElementById('task-name');
+    const taskDescInput = document.getElementById('task-desc');
+    const taskList = document.getElementById('task-list');
+
+    // Load all tasks
+    async function loadTasks() {
+      const res = await fetch('/tasks');
+      const tasks = await res.json();
+      taskList.innerHTML = tasks.map(task =>
+        `<li>
+          <strong>${task.name}</strong>: ${task.description}
+          <button onclick="deleteTask(${task.id})">Delete</button>
+          <button onclick="updateTask(${task.id})">Update</button>
+        </li>`
+      ).join('');
+    }
+
+    // Add a new task
+    taskForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = taskNameInput.value.trim();
+      const description = taskDescInput.value.trim();
+      if (name && description) {
+        await fetch('/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, description })
+        });
+        taskForm.reset();
+        loadTasks();
+      }
+    });
+
+    // Delete a task
+    async function deleteTask(id) {
+      await fetch(`/tasks/${id}`, { method: 'DELETE' });
+      loadTasks();
+    }
+
+    //  Update a task
+    async function updateTask(id) {
+      const newName = prompt('Enter new name');
+      const newDesc = prompt('Enter new description');
+      if (newName && newDesc) {
+        await fetch(`/tasks/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newName, description: newDesc })
+        });
+        loadTasks();
+      }
+    }
+
+    loadTasks();
+  </script>
+</body>
+
+</html>
